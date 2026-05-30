@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz: Qt i JavaFX</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1d2671, #c33764);
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    }
+
+    h1 { margin: 0 0 10px; color: #1d2671; }
+
+    .small { color: #666; font-size: 14px; }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .badge {
+      background: #eef1ff;
+      color: #1d2671;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .menu {
+      display: grid;
+      gap: 14px;
+      margin-top: 25px;
+    }
+
+    .menu button,
+    .main-btn {
+      border: none;
+      background: #1d2671;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .menu button:hover,
+    .main-btn:hover { background: #11184d; }
+
+    .main-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      background: #c33764;
+    }
+
+    .secondary-btn:hover {
+      background: #96284e;
+    }
+
+    .progress {
+      height: 12px;
+      background: #eee;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 18px 0;
+      display: none;
+    }
+
+    .progress div {
+      height: 100%;
+      width: 0%;
+      background: #1d2671;
+      transition: 0.3s;
+    }
+
+    #quizBox { display: none; }
+
+    .question {
+      font-size: 22px;
+      font-weight: bold;
+      margin: 22px 0;
+      line-height: 1.35;
+    }
+
+    .answers {
+      display: grid;
+      gap: 12px;
+    }
+
+    button.answer {
+      border: 2px solid #ddd;
+      background: #fafafa;
+      border-radius: 14px;
+      padding: 15px;
+      text-align: left;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #222;
+    }
+
+    button.answer:hover {
+      transform: translateY(-2px);
+      border-color: #1d2671;
+    }
+
+    button.answer.correct {
+      background: #d9f8df;
+      border-color: #22a447;
+    }
+
+    button.answer.wrong {
+      background: #ffe0e0;
+      border-color: #d12f2f;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 22px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .explain {
+      margin-top: 14px;
+      padding: 14px;
+      background: #f5f6ff;
+      border-left: 5px solid #1d2671;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .result {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .result h2 {
+      font-size: 32px;
+      color: #1d2671;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <div>
+        <h1>Quiz: Qt i JavaFX</h1>
+        <div class="small">Wybierz tryb i sprawdź swoją wiedzę.</div>
+      </div>
+      <div class="badge" id="scoreBadge">Wynik: 0</div>
+    </div>
+
+    <section id="menu" class="menu">
+      <button onclick="startQuiz('random')">Losowe 15 pytań</button>
+      <button onclick="startQuiz('exam')">Tryb egzaminu — 15 pytań</button>
+      <button class="secondary-btn" onclick="startQuiz('all')">Wszystkie pytania</button>
+    </section>
+
+    <div class="progress" id="progress"><div id="progressBar"></div></div>
+
+    <section id="quizBox">
+      <div class="small" id="counter"></div>
+      <div class="question" id="question"></div>
+      <div class="answers" id="answers"></div>
+      <div class="explain" id="explain"></div>
+      <div class="controls">
+        <button class="main-btn" id="nextBtn" disabled>Następne pytanie</button>
+        <button class="main-btn secondary-btn" id="restartBtn">Menu</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        question: "W frameworku Qt komponentem pozwalającym użytkownikowi na wybór czcionki, jej stylu oraz rozmiaru jest:",
+        answers: ["QFontDialog", "QFileDialog", "QColorDialog", "QMessageBox"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: QFontDialog."
+      },
+      {
+        question: "Do zarządzania obiektami na scenie w Graphics View Framework służy klasa:",
+        answers: ["QGraphicsView", "QGraphicsScene", "QWidget", "QPainter"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: QGraphicsScene."
+      },
+      {
+        question: "Do zgłoszenia sygnału w Qt służy:",
+        answers: ["emit", "send", "throw", "dispatch"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: emit."
+      },
+      {
+        question: "Elementy graficznego interfejsu użytkownika w Qt są nazywane:",
+        answers: ["slotami", "widżetami", "scenami", "modelami"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: widżetami."
+      },
+      {
+        question: "Jako centralny widżet w klasie QMainWindow możemy ustawić:",
+        answers: ["Tylko QPushButton", "Dowolny widżet dziedziczący po QWidget", "Tylko QDialog", "Tylko QLabel"],
+        correct: 1,
+        explain: "Centralnym widżetem może być dowolny QWidget."
+      },
+      {
+        question: "Klasą bazową dla zdarzeń w Qt jest:",
+        answers: ["QObject", "QWidget", "QEvent", "QAction"],
+        correct: 2,
+        explain: "Poprawna odpowiedź: QEvent."
+      },
+      {
+        question: "Aby dodać nową akcję w Qt Creatorze, korzystamy z:",
+        answers: ["Action Editor", "Scene Builder", "FXMLLoader", "Package Manager"],
+        correct: 0,
+        explain: "Nowe akcje dodaje się w panelu Action Editor."
+      },
+      {
+        question: "Aby powiązać widok z modelem w Qt należy wywołać:",
+        answers: ["setScene()", "setModel()", "setView()", "bindModel()"],
+        correct: 1,
+        explain: "Widok z modelem łączymy metodą setModel()."
+      },
+      {
+        question: "Aby powiązać widok ze sceną w Qt należy wywołać:",
+        answers: ["setScene()", "setModel()", "setWidget()", "setLayout()"],
+        correct: 0,
+        explain: "Widok ze sceną łączymy metodą setScene()."
+      },
+      {
+        question: "Aby przekazać sterowanie do biblioteki Qt wywołujemy:",
+        answers: ["run()", "start()", "exec()", "launch()"],
+        correct: 2,
+        explain: "W Qt używamy app.exec()."
+      },
+      {
+        question: "Aby ustawić w Qt widżet jako centralny widżet w MainWindow należy użyć:",
+        answers: ["setCentralWidget()", "setMainWidget()", "addCentral()", "setRoot()"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: setCentralWidget()."
+      },
+      {
+        question: "Aby utworzyć komunikat z ostrzeżeniem w Qt należy użyć:",
+        answers: ["QMessageBox::warning()", "QDialog::alert()", "QWarningBox::show()", "QAlert::warning()"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: QMessageBox::warning()."
+      },
+      {
+        question: "Aby utworzyć obiekt klasy QSettings podajemy:",
+        answers: ["Nazwę klasy i metodę", "Nazwę organizacji i aplikacji", "Tylko nazwę pliku", "Tylko ścieżkę do katalogu"],
+        correct: 1,
+        explain: "QSettings przyjmuje zwykle nazwę organizacji oraz aplikacji."
+      },
+      {
+        question: "Aby utworzyć okno dialogowe modalne w Qt należy wywołać metodę:",
+        answers: ["show()", "open()", "exec()", "start()"],
+        correct: 2,
+        explain: "Modalne okno dialogowe uruchamia się metodą exec()."
+      },
+      {
+        question: "Komponent do wprowadzania tekstu w JavaFX to:",
+        answers: ["TextField", "QLineEdit", "JTextField", "InputBox"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: TextField."
+      },
+      {
+        question: "Kontener JavaFX, który posiada pięć stref: górną, lewą, dolną, prawą i centralną to:",
+        answers: ["HBox", "VBox", "BorderPane", "AnchorPane"],
+        correct: 2,
+        explain: "Poprawna odpowiedź: BorderPane."
+      },
+      {
+        question: "Kontener JavaFX, w którym elementy możemy dowiązać np. do prawego dolnego rogu to:",
+        answers: ["AnchorPane", "HBox", "GridPane", "BorderPane"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: AnchorPane."
+      },
+      {
+        question: "Metoda, w której zazwyczaj tworzona lub ładowana jest z pliku FXML zawartość to:",
+        answers: ["start lub initialize", "exec lub emit", "main lub run", "paint lub draw"],
+        correct: 0,
+        explain: "Najczęściej używa się start() lub initialize()."
+      },
+      {
+        question: "Obiekt reprezentujący główne okno aplikacji JavaFX to:",
+        answers: ["Scene", "Stage", "FXMLLoader", "Node"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: Stage."
+      },
+      {
+        question: "FXML jest oparty na:",
+        answers: ["JSON", "XML", "HTML", "CSS"],
+        correct: 1,
+        explain: "FXML jest oparty na formacie XML."
+      },
+      {
+        question: "Grupa przełączników, w której zaznaczona może być tylko jedna opcja to:",
+        answers: ["CheckGroup", "RadioSet", "ToggleGroup", "ButtonGroup"],
+        correct: 2,
+        explain: "Poprawna odpowiedź: ToggleGroup."
+      },
+      {
+        question: "Klasa będąca kontenerem najwyższego poziomu dla wszystkich elementów UI w aplikacji JavaFX to:",
+        answers: ["Scene", "Stage", "Button", "FXMLLoader"],
+        correct: 0,
+        explain: "Najczęściej wskazywana odpowiedź: Scene."
+      },
+      {
+        question: "Klasa służąca do wczytywania FXML to:",
+        answers: ["FXMLReader", "FXMLLoader", "SceneBuilder", "XMLStage"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: FXMLLoader."
+      },
+      {
+        question: "Aby połączyć obiekty RadioButton w grupę w JavaFX należy użyć:",
+        answers: ["ToggleGroup", "CheckBoxGroup", "RadioPane", "ButtonModel"],
+        correct: 0,
+        explain: "RadioButtony łączy się przez ToggleGroup."
+      },
+      {
+        question: "Aby sprawdzić, czy CheckBox jest zaznaczony, należy użyć:",
+        answers: ["box.checked()", "box.isSelected()", "box.getChecked()", "box.selected()"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: box.isSelected()."
+      },
+      {
+        question: "Aby uruchomić aplikację JavaFX należy wywołać metodę klasy Application:",
+        answers: ["exec()", "launch()", "run()", "startApp()"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: launch()."
+      },
+      {
+        question: "Do projektowania interfejsów w JavaFX służy:",
+        answers: ["Scene Builder", "Qt Creator", "qmake", "QDesigner"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: Scene Builder."
+      },
+      {
+        question: "Obszar roboczy okna w JavaFX jest opisywany przez klasę:",
+        answers: ["Stage", "Scene", "Window", "Panel"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: Scene."
+      },
+      {
+        question: "Kontener układający elementy w poziomie w JavaFX to:",
+        answers: ["VBox", "HBox", "GridPane", "FlowPane"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: HBox."
+      },
+      {
+        question: "W JavaFX od wersji 2.0 do definiowania GUI jest używany:",
+        answers: ["FXML", "QML", "JSON", "YAML"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: FXML."
+      },
+      {
+        question: "Mechanizm komunikacji w Qt realizowany jest za pomocą:",
+        answers: ["Sygnałów i slotów", "FXML i CSS", "Stage i Scene", "Modeli i tabel"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: sygnały i sloty."
+      },
+      {
+        question: "Klasa bazowa dla wszystkich obiektów w Qt, które obsługują pamięć i sygnały to:",
+        answers: ["QObject", "QWidget", "QMainWindow", "QApplication"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: QObject."
+      },
+      {
+        question: "Narzędzie do automatycznego generowania plików Makefile w Qt to:",
+        answers: ["qmake lub CMake", "FXMLLoader", "Scene Builder", "javac"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: qmake lub CMake."
+      },
+      {
+        question: "Główna klasa odpowiedzialna za pętlę zdarzeń w aplikacji okienkowej Qt to:",
+        answers: ["QApplication", "QEvent", "QWidget", "QObject"],
+        correct: 0,
+        explain: "Poprawna odpowiedź: QApplication."
+      },
+      {
+        question: "Makro, które musi być umieszczone w klasie, aby obsługiwała ona sygnały i sloty to:",
+        answers: ["Q_SLOT", "Q_OBJECT", "Q_SIGNAL", "QT_MAIN"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: Q_OBJECT."
+      },
+      {
+        question: "Komponent/Widżet do wyświetlania i edycji pojedynczej linii tekstu w Qt to:",
+        answers: ["QTextEdit", "QLineEdit", "QLabel", "QInputDialog"],
+        correct: 1,
+        explain: "Poprawna odpowiedź: QLineEdit."
+      },
+      {
+        question: "Kontener układu w Qt rozmieszczający widżety w siatce to:",
+        answers: ["QHBoxLayout", "QVBoxLayout", "QGridLayout", "QFormLayout"],
+        correct: 2,
+        explain: "Poprawna odpowiedź: QGridLayout."
+      }
+    ];
+
+    let quizQuestions = [];
+    let current = 0;
+    let score = 0;
+    let answered = false;
+    let examMode = false;
+    let userAnswers = [];
+
+    const menu = document.getElementById("menu");
+    const quizBox = document.getElementById("quizBox");
+    const progress = document.getElementById("progress");
+    const progressBar = document.getElementById("progressBar");
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const counterEl = document.getElementById("counter");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const explainEl = document.getElementById("explain");
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function startQuiz(mode) {
+      examMode = mode === "exam";
+      quizQuestions = mode === "all" ? [...questions] : shuffle(questions).slice(0, 15);
+      current = 0;
+      score = 0;
+      answered = false;
+      userAnswers = [];
+
+      scoreBadge.textContent = "Wynik: 0";
+      scoreBadge.style.display = examMode ? "none" : "block";
+      menu.style.display = "none";
+      quizBox.style.display = "block";
+      progress.style.display = "block";
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+      nextBtn.disabled = true;
+      explainEl.style.display = "none";
+
+      const q = quizQuestions[current];
+      counterEl.textContent = `Pytanie ${current + 1} z ${quizQuestions.length}`;
+      questionEl.textContent = q.question;
+      answersEl.innerHTML = "";
+      progressBar.style.width = `${(current / quizQuestions.length) * 100}%`;
+
+      q.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.className = "answer";
+        btn.textContent = answer;
+        btn.onclick = () => chooseAnswer(btn, index);
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function chooseAnswer(button, index) {
+      const buttons = document.querySelectorAll(".answer");
+
+      if (examMode) {
+        buttons.forEach(btn => {
+          btn.style.borderColor = "#ddd";
+          btn.style.background = "#fafafa";
+        });
+
+        button.style.borderColor = "#1d2671";
+        button.style.background = "#eef1ff";
+        userAnswers[current] = index;
+        nextBtn.disabled = false;
+        return;
+      }
+
+      if (answered) return;
+      answered = true;
+
+      const q = quizQuestions[current];
+      userAnswers[current] = index;
+
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add("correct");
+      });
+
+      if (index === q.correct) {
+        score++;
+        scoreBadge.textContent = `Wynik: ${score}`;
+      } else {
+        button.classList.add("wrong");
+      }
+
+      explainEl.textContent = q.explain;
+      explainEl.style.display = "block";
+      nextBtn.disabled = false;
+    }
+
+    function showResult() {
+      progressBar.style.width = "100%";
+      const percent = examMode ? 0 : Math.round((score / quizQuestions.length) * 100);
+
+      let review = "";
+      if (examMode) {
+        review = `
+          <h3>Podsumowanie odpowiedzi</h3>
+          <div style="text-align:left; display:grid; gap:12px; margin-top:15px;">
+            ${quizQuestions.map((q, i) => {
+              const user = userAnswers[i];
+              const isCorrect = user === q.correct;
+              return `
+                <div style="padding:12px; border-radius:12px; background:${isCorrect ? '#d9f8df' : '#ffe0e0'};">
+                  <strong>${i + 1}. ${q.question}</strong><br>
+                  Twoja odpowiedź: ${q.answers[user]}<br>
+                  Poprawna odpowiedź: ${q.answers[q.correct]}
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+
+      quizBox.innerHTML = `
+        <div class="result">
+          <h2>Koniec quizu!</h2>
+          ${!examMode ? `
+            <p>Twój wynik: <strong>${score}/${quizQuestions.length}</strong></p>
+            <p>Procent: <strong>${percent}%</strong></p>
+          ` : `
+            <p><strong>Egzamin zakończony.</strong></p>
+            <p>Poniżej znajduje się zestawienie Twoich odpowiedzi i poprawnych odpowiedzi.</p>
+          `}
+          ${review}
+          <button class="main-btn" onclick="location.reload()" style="margin-top:20px;">Wróć do menu</button>
+        </div>
+      `;
+    }
+
+    nextBtn.addEventListener("click", () => {
+      current++;
+
+      if (current < quizQuestions.length) {
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    });
+
+    restartBtn.addEventListener("click", () => location.reload());
+  </script>
+</body>
+</html>
